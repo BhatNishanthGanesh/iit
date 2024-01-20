@@ -1,8 +1,8 @@
-'use client'
+"use client";
 import React, { useState } from "react";
 import { FiMenu, FiArrowRight, FiX, FiChevronDown } from "react-icons/fi";
 import { FaUserCircle } from "react-icons/fa";
-import Image from 'next/image';
+import Image from "next/image";
 import Fav from "../fav/page";
 // import { roboto_mono } from "@/app/layout";
 import {
@@ -26,7 +26,6 @@ export const Example = () => {
             objectFit="contain"
           />
         </div>
-       
       </div>
       <div className="absolute inset-0 z-0 bg-gradient-to-b from-neutral-800/90 to-neutral-950/0" />
     </>
@@ -54,8 +53,8 @@ export const FlyoutNav = () => {
       <div className="mx-auto flex max-w-7xl items-center justify-between">
         <Logo />
         <div className="hidden gap-6 lg:flex">
-          <SignUp/>
-          <Favour/>
+          <SignUp />
+          <Favour />
         </div>
         <MobileMenu />
       </div>
@@ -67,24 +66,23 @@ const Logo = ({ color = "white" }) => {
   // Temp logo from https://logoipsum.com/
   return (
     <div className="flex items-center gap-2">
-      <span className="text-2xl cursor-pointer font-bold" style={{ color }}>
-        WiseBuy
-      </span>
-     
+      <Link href={"/"}>
+        <span className="text-2xl cursor-pointer font-bold" style={{ color }}>
+          WiseBuy
+        </span>
+      </Link>
     </div>
   );
 };
 
-
-
 const SignUp = () => {
   return (
     <>
-    <button
-      className={`
+      <button
+        className={`
           relative z-0 flex items-center gap-2 overflow-hidden whitespace-nowrap rounded-lg border-[1px] 
           border-neutral-700 px-4 py-1.5 font-medium
-         text-neutral-300 transition-all duration-300 w-full pr-6
+         text-white transition-all duration-300 w-full pr-6
           before:absolute before:inset-0
           before:-z-10 before:translate-y-[200%]
           before:scale-[2.5]
@@ -95,22 +93,21 @@ const SignUp = () => {
           hover:scale-105 hover:border-neutral-50 hover:text-neutral-900
           hover:before:translate-y-[0%]
           active:scale-100`}
-    >
-      Sign In
-    </button>
-     
-     </>
+      >
+        Sign In
+      </button>
+    </>
   );
-}
+};
 
-const Favour=()=>{
-  return(
+const Favour = () => {
+  return (
     <>
-     <button
-      className={`
+      <button
+        className={`
           relative z-0 flex items-center gap-2 overflow-hidden whitespace-nowrap rounded-lg border-[1px] 
           border-neutral-700 px-4 py-1.5 font-medium
-         text-neutral-300 transition-all duration-300 w-full pr-6
+         text-white transition-all duration-300 w-full pr-6
           
           before:absolute before:inset-0
           before:-z-10 before:translate-y-[200%]
@@ -122,15 +119,14 @@ const Favour=()=>{
           hover:scale-105 hover:border-red-800 hover:text-neutral-900
           hover:before:translate-y-[0%]
           active:scale-100`}
-    >
-      <Link href='/fav'>Favourities</Link>
-    </button>
+      >
+        <Link href="/fav">Favourities</Link>
+      </button>
     </>
-  )
-}
+  );
+};
 
-
-const MobileMenuLink = ({ children, href, FoldContent, setMenuOpen }:any) => {
+const MobileMenuLink = ({ children, href, FoldContent, setMenuOpen }: any) => {
   const [open, setOpen] = useState(false);
 
   return (
@@ -212,13 +208,10 @@ const MobileMenu = () => {
               </button>
             </div>
             <div className="flex justify-end p-6">
-              {/* <CTAs /> */}
-              <Favour/>
-             
+              <Favour />
             </div>
             <div className="flex justify-end p-6">
-
-              <SignUp/>
+              <SignUp />
             </div>
           </motion.nav>
         )}
@@ -226,4 +219,3 @@ const MobileMenu = () => {
     </div>
   );
 };
-

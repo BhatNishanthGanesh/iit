@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Heart } from "lucide-react";
 import Image from "next/image";
 import { FaHeart } from "react-icons/fa";
+import { toast } from "sonner"
 
 export default function ProductCard({ product }: any) {
   const [fav, setFav] = useState(false);
@@ -27,31 +28,45 @@ export default function ProductCard({ product }: any) {
 
       const data = await response.json();
       console.log("Product added successfully:", data);
+      toast("Product added successfully.")
+      setFav(true); // Set fav to true after successfully adding to favorites
     } catch (error) {
       console.error("Error adding product to favorites:", error);
     }
   };
-
   const removeProductFromFavorites = async () => {
     try {
       const response = await fetch(`http://localhost:3100/products/${product.title}`, {
         method: "DELETE",
       });
-
+  
       if (!response.ok) {
         console.error("Failed to remove product from favorites");
         return;
       }
-
-      const data = await response.json();
-      console.log("Product removed successfully:", data);
+  
+      // Check if the response is empty
+      const contentType = response.headers.get("content-type");
+      if (contentType && contentType.indexOf("application/json") !== -1) {
+        // If content-type is JSON, parse the response
+        const data = await response.json();
+        console.log("Product removed successfully:", data);
+        toast("Deleted.")
+      } else {
+        // If content-type is not JSON (empty response), log a message
+        console.log("Product removed successfully.");
+        toast("Deleted.")
+      }
+  
+      setFav(false); // Set fav to false after successfully removing from favorites
     } catch (error) {
       console.error("Error removing product from favorites:", error);
+      toast("Error.")
     }
   };
+  
 
   const handleHeartClick = () => {
-    setFav(!fav);
     if (fav) {
       // If already a favorite, remove from favorites
       removeProductFromFavorites();
@@ -60,6 +75,7 @@ export default function ProductCard({ product }: any) {
       addProductToFavorites();
     }
   };
+
 
   return (
     <>
@@ -80,7 +96,7 @@ export default function ProductCard({ product }: any) {
           )}
         </div>
         <div className="relative overflow-hidden rounded-t-md aspect-square">
-          <Image src={product.image || product.img} alt="" width={500} height={500} />
+          <Image src={product.image || product.img} alt="" width={500} height={500} className="" />
         </div>
         <div className="px-2">
           <div className="flex justify-between">
