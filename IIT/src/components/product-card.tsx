@@ -4,67 +4,92 @@ import Image from "next/image";
 import { FaHeart } from "react-icons/fa";
 import { toast } from "sonner"
 
-export default function ProductCard({ product }: any) {
+export default function ProductCard({ product ,price}: any) {
   const [fav, setFav] = useState(false);
+  
 
+  const cleanUpPrice = (price: string) => {
+    return price.replace(/[^\d.]/g, '').trim();
+  };
+  
+  
   const addProductToFavorites = async () => {
     try {
+      const cleanedPrice = cleanUpPrice(product.price);
+      const priceValue = parseFloat(cleanedPrice);
+      const isPriceValid = !isNaN(priceValue) && isFinite(priceValue);
+  
+      if (!isPriceValid) {
+        console.error("Invalid price value:", product.price);
+        return;
+      }
+  
+      const requestData = {
+        name: product.title,
+        currentPrice: priceValue,
+        img: product.image,
+        platform: product.site,
+      };
+  
+      console.log("Adding product to favorites:", requestData);
+  
       const response = await fetch("http://localhost:3100/products", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          name: product.title,
-          prices: [10, 20, 30],
-          img: product.image,
-        }),
+        body: JSON.stringify(requestData),
       });
-
+  
       if (!response.ok) {
-        console.error("Failed to add product to favorites");
+        console.error("Failed to add product to favorites. Server response:", response);
         return;
       }
-
+  
       const data = await response.json();
       console.log("Product added successfully:", data);
-      toast("Product added successfully.")
+      toast("Product added successfully.");
       setFav(true); // Set fav to true after successfully adding to favorites
     } catch (error) {
       console.error("Error adding product to favorites:", error);
+      toast("Error adding product to favorites.");
     }
   };
+  
+  
+  
   const removeProductFromFavorites = async () => {
     try {
-      const response = await fetch(`http://localhost:3100/products/${product.title}`, {
-        method: "DELETE",
-      });
-  
-      if (!response.ok) {
-        console.error("Failed to remove product from favorites");
-        return;
-      }
-  
-      // Check if the response is empty
-      const contentType = response.headers.get("content-type");
-      if (contentType && contentType.indexOf("application/json") !== -1) {
-        // If content-type is JSON, parse the response
-        const data = await response.json();
-        console.log("Product removed successfully:", data);
-        toast("Deleted.")
-      } else {
-        // If content-type is not JSON (empty response), log a message
-        console.log("Product removed successfully.");
-        toast("Deleted.")
-      }
-  
-      setFav(false); // Set fav to false after successfully removing from favorites
+        const encodedProductName = encodeURIComponent(product.title);
+        const response = await fetch(`http://localhost:3100/products/${encodedProductName}`, {
+            method: "DELETE",
+        });
+
+        if (!response.ok) {
+            console.error("Failed to remove product from favorites. Server response:", response);
+            return;
+        }
+
+        // Check if the response is empty
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.indexOf("application/json") !== -1) {
+            // If content-type is JSON, parse the response
+            const data = await response.json();
+            console.log("Product removed successfully:", data);
+            toast("Deleted.")
+        } else {
+            // If content-type is not JSON (empty response), log a message
+            console.log("Product removed successfully.");
+            toast("Deleted.")
+        }
+
+        setFav(false); // Set fav to false after successfully removing from favorites
     } catch (error) {
-      console.error("Error removing product from favorites:", error);
-      toast("Error.")
+        console.error("Error removing product from favorites:", error);
+        toast("Error.")
     }
-  };
-  
+};
+
 
   const handleHeartClick = () => {
     if (fav) {

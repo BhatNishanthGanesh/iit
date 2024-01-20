@@ -2,6 +2,9 @@ const mongoose = require('mongoose');
 const express = require('express');
 const cors = require('cors');
 const puppeteer = require('puppeteer');
+const cron = require('node-cron');
+const nodemailer = require("nodemailer");
+
 const app = express();
 app.use(express.json());
 app.use(cors());
@@ -35,41 +38,79 @@ dbconnect().then(startServer);
 
 const productSchema = new mongoose.Schema({
   name: String,
-  prices: {
-    type: [Number],
-    validate: {
-      validator: function (v) {
-        return v.length === 3; // Ensure the array has exactly 3 elements
-      },
-      message: 'Prices array must have exactly 3 elements',
-    },
-    required: true,
-  },
+  currentPrice: Number, // Single price for simplicity
   img: String,
+  platform: { type: String, enum: ['amazon', 'flipkart'] }, // New field for platform
 });
 
 const Product = mongoose.model('Product', productSchema);
 
 app.post('/products', async (req, res) => {
   try {
-    const { name, prices, img } = req.body;
+    const { name, currentPrice, img, platform } = req.body;
 
-    if (!name || !prices || prices.length !== 3) {
-      return res.status(400).json({ error: 'Name and a prices array with exactly 3 elements are required' });
+    if (!name || !currentPrice || !platform) {
+      return res.status(400).json({ error: 'Name, currentPrice, and platform are required' });
     }
 
-    const newProduct = new Product({ name, prices, img });
+    const newProduct = new Product({ name, currentPrice, img, platform });
     await newProduct.save();
 
     res.json({ message: 'Product added successfully', product: newProduct });
   } catch (error) {
+    console.error('Error adding product:', error);
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
+
+
+
+
+const printConsoleNotification = (productName, currentPrice, trackPrice) => {
+  console.log(`Price Drop Alert for ${productName}: The price has dropped from ${trackPrice} to ${currentPrice}.`);
+};
+
+// ... (previous code remains unchanged)
+
+// ... (previous code remains unchanged)
+cron.schedule('*/10 * * * *', async () => {
+  try {
+    console.log('Cron job started');
+
+    const allProducts = await Product.find();
+
+    for (const product of allProducts) {
+      const currentProductInfo = await searchECommerce(product.platform, product.name);
+
+      // Check if the array is not empty before accessing its elements
+      if (currentProductInfo && currentProductInfo.length > 0) {
+        // Extract numeric part from the string and convert to float
+        const currentPrice = parseFloat(currentProductInfo[0].currentPrice.replace(/[^\d.]/g, ''));
+
+        // Update the current price in the database
+        await Product.findByIdAndUpdate(product._id, { currentPrice });
+
+        // Compare the current price with the tracked price
+        if (currentPrice < product.currentPrice) {
+          // If the current price is less than the tracked price, print a console notification
+          printConsoleNotification(product.name, currentPrice, product.currentPrice);
+        }
+      }
+    }
+
+    console.log('Cron job completed');
+  } catch (error) {
+    console.error('Error during price tracking cron job:', error);
+  }
+});
+
+
+
 async function searchECommerce(site, productTitle) {
   const browser = await puppeteer.launch({
-    headless: true
+    headless: true,
+    timeout:60000,
   });
   const page = await browser.newPage();
 
@@ -79,10 +120,10 @@ async function searchECommerce(site, productTitle) {
       'https://www.amazon.com' :
       'https://www.flipkart.com';
 
-    await page.goto(searchUrl, { waitUntil: 'domcontentloaded' });
+      await page.goto(searchUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
 
     // Type the product title in the search box
-    const searchBoxSelector = site === 'amazon' ? '#twotabsearchtextbox' : 'input[name="q"]';
+    const searchBoxSelector = site === 'amazon' ? 'input[name="field-keywords"' : 'input[name="q"]';
     await page.waitForSelector(searchBoxSelector, { visible: true });
     await page.type(searchBoxSelector, productTitle);
     await page.keyboard.press('Enter');
@@ -104,43 +145,57 @@ async function searchECommerce(site, productTitle) {
 
           if (titleElement && priceElement) {
             const title = titleElement.innerText.trim();
-            const price = priceElement.innerText.trim();
+            
             const image = imageElement ? imageElement.src : null;
-
+    
+            const currentPriceElement = container.querySelector('.a-price .a-offscreen');
+            const price = currentPriceElement ? currentPriceElement.innerText.trim() : 'N/A';
+            const site = 'amazon';
+    
             products.push({
               title,
               price,
               image,
-              productId
+              productId,
+              site
             });
+    
+            console.log(products);
           }
         }
-      } else if (window.location.hostname.includes('flipkart')) {
+      }else if (window.location.hostname.includes('flipkart')) {
         // Flipkart
+        // Inside the Flipkart section of page.evaluate
         const productContainers = document.querySelectorAll('div._1AtVbE');
 
         for (const container of productContainers) {
-          const titleElement = container.querySelector('a._1fQZEK');
-          const titlElement = container.querySelector('div._4rR01T');
-          const priceElement = container.querySelector('div._30jeq3');
-          const productIdElement = container.querySelector('div._1AtVbE div[data-id]');
-          const productId = productIdElement ? productIdElement.getAttribute('data-id') : null;
-          const imageElement = container.querySelector('img');
+            const titleElement = container.querySelector('a._1fQZEK');
+            const titlElement = container.querySelector('div._4rR01T');
+            const priceElement = container.querySelector('div._30jeq3');
+            const productIdElement = container.querySelector('div._1AtVbE div[data-id]');
+            const productId = productIdElement ? productIdElement.getAttribute('data-id') : null;
+            const imageElement = container.querySelector('img');
 
-          if (titleElement && priceElement) {
-            const title = titlElement.textContent;
-            const price = priceElement.innerText?.trim() || 'N/A';
-            const image = imageElement?.src || null;
+            // Check if both titleElement and priceElement are not null
+            if (titleElement && priceElement) {
+                // Use optional chaining to handle potential null values
+                const title = titlElement.textContent;
+                const price = priceElement.innerText?.trim() || 'N/A';
+                const image = imageElement?.src || null;
+                const productId = container.getAttribute('data-id') || null;
+                const site = 'flipkart';
 
-            products.push({
-              title,
-              price,
-              image,
-              productId
-            });
-          }
+                products.push({
+                    title,
+                    price,
+                    image,
+                    productId,
+                    site
+                });
+            }
         }
-      }
+
+    }
 
       return products;
     });
@@ -154,7 +209,7 @@ async function searchECommerce(site, productTitle) {
 
 app.post('/search', async (req, res) => {
   const { title } = req.body;
-  const websites = ['amazon', 'flipkart'];
+  const websites = ['flipkart','amazon'];
 
   try {
     const results = await Promise.all(websites.map(site => searchECommerce(site, title)));
@@ -170,23 +225,24 @@ app.post('/search', async (req, res) => {
 
 
 app.delete('/products/:name', (req, res) => {
-    const itemName = req.params.name;
-  
-    Product.findOneAndDelete({ name: itemName }, (err) => {
+  const itemName = req.params.name;
+
+  Product.findOneAndDelete({ name: itemName }, (err) => {
       if (!err) {
-        console.log(`Successfully deleted item with name: ${itemName}`);
-        res.send(`Successfully deleted item with name: ${itemName}`);
+          console.log(`Successfully deleted item with name: ${itemName}`);
+          res.send(`Successfully deleted item with name: ${itemName}`);
       } else {
-        console.log(err);
-        res.status(500).send(err);
+          console.log(err);
+          res.status(500).send(err);
       }
-    });
   });
+});
+
 
 
 app.get('/fav', async (req, res) => {
   try {
-    const favorites = await Product.find();
+    const favorites = await Product.find().limit(10);;
     res.json(favorites);
   } catch (error) {
     console.error("Error fetching favorites:", error);

@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState,useEffect } from "react";
 import { FiMenu, FiArrowRight, FiX, FiChevronDown } from "react-icons/fi";
 import { FaUserCircle } from "react-icons/fa";
 import Image from "next/image";
@@ -64,14 +64,39 @@ export const FlyoutNav = () => {
 
 const Logo = ({ color = "white" }) => {
   // Temp logo from https://logoipsum.com/
+  const [isScrolled, setIsScrolled] = useState(false);
+
+    useEffect(() => {
+    const handleScroll = () => {
+      const scrolled = window.scrollY > 250; // You can adjust the scroll threshold here
+      setIsScrolled(scrolled);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
   return (
-    <div className="flex items-center gap-2">
-      <Link href={"/"}>
-        <span className="text-2xl cursor-pointer font-bold" style={{ color }}>
-          WiseBuy
-        </span>
-      </Link>
-    </div>
+    <div className="flex items-center  gap-2">
+    <Link href={"/"} className="flex items-center">
+    {/* <div className={`relative ${isScrolled ? 'bg-neutral-600' : 'bg-black'} w-24 rounded-full h-12`}>
+        <Image
+          src="/Images/navbg.png"
+          alt="Mascot"
+          layout="fill"
+          objectFit="contain"
+          className="rounded-full"
+        />
+      </div> */}
+      <span className="text-2xl cursor-pointer font-bold" style={{ color }}>
+        WiseBuy.com
+      </span>
+    </Link>
+  </div>
+  
+  
   );
 };
 
