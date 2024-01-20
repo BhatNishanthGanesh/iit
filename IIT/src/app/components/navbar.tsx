@@ -1,7 +1,9 @@
 "use client";
 import React, { useState,useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { FiMenu, FiArrowRight, FiX, FiChevronDown } from "react-icons/fi";
 import { FaUserCircle } from "react-icons/fa";
+import { signIn, signOut, useSession } from 'next-auth/react'; 
 import Image from "next/image";
 import Fav from "../fav/page";
 // import { roboto_mono } from "@/app/layout";
@@ -13,7 +15,63 @@ import {
 } from "framer-motion";
 import Link from "next/link";
 
+const AuthButton = () => {
+  const { data: session } = useSession();
+  const [showDropdown, setShowDropdown] = useState(false);
+  
+  const router = useRouter();
+
+  const handleAvatarClick = () => {
+    if (session) {
+      setShowDropdown(!showDropdown);
+    } else {
+      router.push('/api/auth/signin');
+    }
+  };
+
+  const handleSignOut = () => {
+    signOut();
+    setShowDropdown(false);
+  };
+
+  return (
+    <div className="flex w-full  items-center">
+      {session?.user?.image ? (
+        <div className="flex ">
+          <button onClick={handleAvatarClick} className="focus:outline-none">
+            <img
+              src={session.user.image}
+              alt="User Avatar"
+              className="w-8 mt-2 mb-2 h-8 rounded-full mr-2 cursor-pointer"
+            />
+          </button>
+          <span className='mt-2 dark:text-white'>
+          {session.user.name}
+          </span>
+
+          {showDropdown && (
+            <div className="absolute mt-10 bg-white shadow-md rounded-md p-2">
+              <button onClick={handleSignOut} className="w-full text-black text-left">
+                Sign out
+              </button>
+            </div>
+          )}
+        </div>
+      ) : (
+        <Link href="/api/auth/signin">
+          <button className=" mb-1.5 dark:bg-white bg-dark dark:text-dark shadow-lg text-white font-bold py-1 px-1 rounded">
+            Sign In
+          </button>
+        </Link>
+      )}
+    </div>
+  );
+};
+
+
+
 export const Example = () => {
+  
   return (
     <>
       <FlyoutNav />
@@ -27,6 +85,7 @@ export const Example = () => {
           />
         </div>
       </div>
+      
       <div className="absolute inset-0 z-0 bg-gradient-to-b from-neutral-800/90 to-neutral-950/0" />
     </>
   );
@@ -101,28 +160,82 @@ const Logo = ({ color = "white" }) => {
 };
 
 const SignUp = () => {
-  return (
-    <>
-      <button
+  const { data: session } = useSession();
+  // return (
+  //   <>
+  //   <Link href='/api/auth/signin'>
+  //     <button
+  //       className={`
+  //         relative z-0 flex items-center gap-2 overflow-hidden whitespace-nowrap rounded-lg border-[1px] 
+  //         border-neutral-700 px-4 py-1.5 font-medium
+  //        text-white transition-all duration-300 w-full pr-6
+  //         before:absolute before:inset-0
+  //         before:-z-10 before:translate-y-[200%]
+  //         before:scale-[2.5]
+  //         before:rounded-[100%] before:bg-neutral-50
+  //         before:transition-transform before:duration-1000
+  //         before:content-[""]
+  
+  //         hover:scale-105 hover:border-neutral-50 hover:text-neutral-900
+  //         hover:before:translate-y-[0%]
+  //         active:scale-100`}
+  //     >
+  //       Sign In 
+  //     </button>
+  //     </Link>
+  //   </>
+  // );
+  if (session) {
+    // If the user is signed in, show the "Sign Out" button
+    return (
+      <>
+        <AuthButton/>
+      {/* <button
+        onClick={() => signOut()}
         className={`
           relative z-0 flex items-center gap-2 overflow-hidden whitespace-nowrap rounded-lg border-[1px] 
           border-neutral-700 px-4 py-1.5 font-medium
-         text-white transition-all duration-300 w-full pr-6
+          text-white transition-all duration-300 w-full pr-6
           before:absolute before:inset-0
           before:-z-10 before:translate-y-[200%]
           before:scale-[2.5]
           before:rounded-[100%] before:bg-neutral-50
           before:transition-transform before:duration-1000
           before:content-[""]
-  
+
           hover:scale-105 hover:border-neutral-50 hover:text-neutral-900
           hover:before:translate-y-[0%]
           active:scale-100`}
       >
-        Sign In
-      </button>
-    </>
-  );
+        Sign Out
+      </button> */}
+      </>
+    );
+  } else {
+    // If the user is not signed in, show the "Sign In" button
+    return (
+      <Link href='/api/auth/signin'>
+        <button
+          className={`
+            relative z-0 flex items-center gap-2 overflow-hidden whitespace-nowrap rounded-lg border-[1px] 
+            border-neutral-700 px-4 py-1.5 font-medium
+            text-white transition-all duration-300 w-full pr-6
+            before:absolute before:inset-0
+            before:-z-10 before:translate-y-[200%]
+            before:scale-[2.5]
+            before:rounded-[100%] before:bg-neutral-50
+            before:transition-transform before:duration-1000
+            before:content-[""]
+
+            hover:scale-105 hover:border-neutral-50 hover:text-neutral-900
+            hover:before:translate-y-[0%]
+            active:scale-100`}
+        >
+          Sign In 
+        </button>
+      </Link>
+    );
+  }
 };
 
 const Favour = () => {

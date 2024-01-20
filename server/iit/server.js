@@ -163,7 +163,7 @@ async function searchECommerce(site, productTitle) {
       'https://www.amazon.com' :
       'https://www.flipkart.com';
 
-      await page.goto(`https://example.com`, { waitUntil: 'load' });
+      await page.goto(searchUrl, { waitUntil: 'domcontentloaded', timeout: 120000 });
 
     // Type the product title in the search box
     const searchBoxSelector = site === 'amazon' ? 'input[name="field-keywords"' : 'input[name="q"]';

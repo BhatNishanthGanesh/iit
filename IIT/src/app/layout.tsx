@@ -4,6 +4,7 @@ import { Roboto_Mono } from "next/font/google";
 import { FlyoutNav } from "./components/navbar";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
+import Authprovider from "./components/Authprovider";
 // const inter = Inter({ subsets: ["latin"] });
 // const roboto = Roboto({
 //   weight: '400',
@@ -32,9 +33,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="flex flex-col">
+        <Authprovider>
         <FlyoutNav />
         {children}
         <Toaster />
+          
+        </Authprovider>
       </body>
     </html>
   );
