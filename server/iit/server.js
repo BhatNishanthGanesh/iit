@@ -66,14 +66,48 @@ app.post('/products', async (req, res) => {
 
 
 
+var transport = nodemailer.createTransport({
+  host: "sandbox.smtp.mailtrap.io",
+  port: 2525,
+  auth: {
+    user: "440d1d8418fa34",
+    pass: "0d6e2e0964dd7f"
+  }
+});
+
+const toEmail = "recipient@example.com";
+const emailSubject = "Hello from Nodemailer";
+const emailText = "This is a test email from Nodemailer.";
+
+async function sendEmail(to, subject, text) {
+  const mailOptions = {
+    from: "your_email@gmail.com",
+    to,
+    subject,
+    text,
+  };
+
+  try {
+    const info = await transporter.sendMail(mailOptions);
+    console.log("Email sent:", info.response);
+    return info;
+  } catch (error) {
+    console.error("Error sending email:", error);
+    throw error;
+  }
+}
 
 const printConsoleNotification = (productName, currentPrice, trackPrice) => {
   console.log(`Price Drop Alert for ${productName}: The price has dropped from ${trackPrice} to ${currentPrice}.`);
+  sendEmail(toEmail, emailSubject, emailText)
+  .then(() => {
+    console.log("Email sent successfully");
+  })
+  .catch((error) => {
+    console.error("Error sending email:", error);
+  });
 };
 
-// ... (previous code remains unchanged)
-
-// ... (previous code remains unchanged)
 cron.schedule('*/10 * * * *', async () => {
   try {
     console.log('Cron job started');
