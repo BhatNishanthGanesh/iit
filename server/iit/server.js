@@ -108,7 +108,8 @@ const printConsoleNotification = (productName, currentPrice, trackPrice) => {
   });
 };
 
-cron.schedule('*/10 * * * *', async () => {
+// ... (other code)
+cron.schedule('* * * * *', async () => {
   try {
     console.log('Cron job started');
 
@@ -120,15 +121,22 @@ cron.schedule('*/10 * * * *', async () => {
       // Check if the array is not empty before accessing its elements
       if (currentProductInfo && currentProductInfo.length > 0) {
         // Extract numeric part from the string and convert to float
-        const currentPrice = parseFloat(currentProductInfo[0].currentPrice.replace(/[^\d.]/g, ''));
+        const currentPriceText = currentProductInfo[0].currentPrice || ''; // Ensure it's not undefined
+        console.log(currentPriceText)
+        const currentPrice = parseFloat(currentPriceText.replace(/[^\d.]/g, ''));
 
-        // Update the current price in the database
-        await Product.findByIdAndUpdate(product._id, { currentPrice });
+        // Check if parsing was successful and currentPrice is a valid number
+        if (!isNaN(currentPrice)) {
+          // Update the current price in the database
+          await Product.findByIdAndUpdate(product._id, { currentPrice });
 
-        // Compare the current price with the tracked price
-        if (currentPrice < product.currentPrice) {
-          // If the current price is less than the tracked price, print a console notification
-          printConsoleNotification(product.name, currentPrice, product.currentPrice);
+          // Compare the current price with the tracked price
+          if (currentPrice < product.currentPrice) {
+            // If the current price is less than the tracked price, print a console notification
+            printConsoleNotification(product.name, currentPrice, product.currentPrice);
+          }
+        } else {
+          console.log('Failed to parse currentPriceText as a number:', currentPriceText);
         }
       }
     }
@@ -141,10 +149,11 @@ cron.schedule('*/10 * * * *', async () => {
 
 
 
+
 async function searchECommerce(site, productTitle) {
   const browser = await puppeteer.launch({
     headless: true,
-    timeout:60000,
+    timeout:120000,
   });
   const page = await browser.newPage();
 
@@ -154,7 +163,7 @@ async function searchECommerce(site, productTitle) {
       'https://www.amazon.com' :
       'https://www.flipkart.com';
 
-      await page.goto(searchUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
+      await page.goto(`https://example.com`, { waitUntil: 'load' });
 
     // Type the product title in the search box
     const searchBoxSelector = site === 'amazon' ? 'input[name="field-keywords"' : 'input[name="q"]';
