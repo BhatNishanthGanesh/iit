@@ -2,7 +2,7 @@
 'use client'
 import React, { useState, useEffect } from "react";
 import ProductCard from "./product-card";
-
+import { usePathname } from 'next/navigation'
 const FavCards = () => {
   const [favorites, setFavorites] = useState([]);
   const [sortOrder, setSortOrder] = useState("asc"); // Default to ascending
@@ -45,14 +45,16 @@ const FavCards = () => {
     setFavorites(sortedFavorites);
   };
 
+
+
   return (
     <div className="container mx-auto mt-16 p-4">
       <div className="flex  items-center mb-4">
-        <label className="mr-2 font-bold text-lg">Sort by Price:</label>
+        <label className="mr-2 mt-2 font-bold text-lg">Sort by Price:</label>
         <select
           onChange={(e) => handleSort(e.target.value)}
           value={sortOrder}
-          className="p-2 border rounded"
+          className="p-2 border mt-2 rounded"
         >
           <option value="asc">Ascending</option>
           <option value="desc">Descending</option>

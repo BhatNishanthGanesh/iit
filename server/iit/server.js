@@ -66,7 +66,7 @@ app.post('/products', async (req, res) => {
 
 
 
-var transport = nodemailer.createTransport({
+var transporter= nodemailer.createTransport({
   host: "sandbox.smtp.mailtrap.io",
   port: 2525,
   auth: {
@@ -109,7 +109,7 @@ const printConsoleNotification = (productName, currentPrice, trackPrice) => {
 };
 
 // ... (other code)
-cron.schedule('* * * * *', async () => {
+cron.schedule('0 0 * * *', async () => {
   try {
     console.log('Cron job started');
 
